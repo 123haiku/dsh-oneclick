@@ -26,6 +26,13 @@ function Say([string]$m, [string]$c = 'Gray') { Write-Host $m -ForegroundColor $
 Get-Process -Name 'DeepSeek Harness' -ErrorAction SilentlyContinue | Stop-Process -Force
 Start-Sleep -Seconds 3
 
+# the guard would re-apply everything we are about to remove
+$task = Get-ScheduledTask -TaskName 'DSH-Purge-Guard' -ErrorAction SilentlyContinue
+if ($task) {
+    Unregister-ScheduledTask -TaskName 'DSH-Purge-Guard' -Confirm:$false
+    Say 'removed update guard task'
+}
+
 $installRoot = Join-Path $env:LOCALAPPDATA 'Programs\DeepSeek Harness'
 $node = $null
 foreach ($rel in @(

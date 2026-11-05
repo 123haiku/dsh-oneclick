@@ -1,4 +1,4 @@
-﻿#Requires -Version 5.1
+#Requires -Version 5.1
 <#
 .SYNOPSIS
     One-click installer: unattended prompt-layer + code-layer patch for DSH desktop.
@@ -36,7 +36,8 @@ param(
     [string]$DshHome,
     [switch]$NoRestart,
     [switch]$DryRun,
-    [switch]$Force
+    [switch]$Force,
+    [switch]$NoGuard
 )
 
 $ErrorActionPreference = 'Stop'
@@ -226,6 +227,21 @@ if (Test-Path $guard) {
     & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $guard snapshot 2>&1 | ForEach-Object { Say "  $_" }
 }
 else { Say '  guard not installed; skipped (scripts\verify.ps1 in dsh-prompt-layer-notes covers it)' 'Yellow' }
+
+# ---------------------------------------------------------------- update guard
+
+if ($NoGuard) {
+    Say 'update guard skipped (-NoGuard)' 'Yellow'
+}
+else {
+    $guardInstaller = Join-Path $root 'Install-Guard.ps1'
+    if (Test-Path $guardInstaller) {
+        Step 'install update guard'
+        & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $guardInstaller 2>&1 | ForEach-Object { Say "  $_" }
+        if ($LASTEXITCODE -ne 0) { Say "  guard registration exited $LASTEXITCODE (non-fatal)" 'Yellow' }
+    }
+    else { Say '  Install-Guard.ps1 missing; skipped (patches will not survive the next update)' 'Yellow' }
+}
 
 # ---------------------------------------------------------------- restart
 
